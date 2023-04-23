@@ -25,6 +25,11 @@ class Bob():
         self.sk = hkdf(dh1+dh2+dh3+dh4, 32)
         print("[Bob]: Shared key=",b64(self.sk))
 
+    def init_ratchets(self):
+        self.root_ratchet = SymmetricRatchet(self.sk)
+        self.recv_ratchet = SymmetricRatchet(self.root_ratchet.next()[0])
+        self.send_ratchet = SymmetricRatchet(self.root_ratchet.next()[0])
+
 class Alice():
     def __init__(self):
         self.IdentityKa = X25519PrivateKey.generate()
@@ -38,4 +43,9 @@ class Alice():
 
         self.sk = hkdf(dh1+dh2+dh3+dh4, 32)
         print("[Alice]: Shared key=",b64(self.sk))
+
+    def init_ratchets(self):
+        self.root_ratchet = SymmetricRatchet(self.sk)
+        self.recv_ratchet = SymmetricRatchet(self.root_ratchet.next()[0])
+        self.send_ratchet = SymmetricRatchet(self.root_ratchet.next()[0])
 

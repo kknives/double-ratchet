@@ -16,3 +16,5 @@ if __name__ == "__main__":
         , receive ratchet={list(map(b64, alice.recv_ratchet.next()))}""")
     print(f"""[Bob]: send ratchet={list(map(b64, bob.send_ratchet.next()))},
         receive ratchet={list(map(b64, bob.recv_ratchet.next()))}""")
+
+    alice.dh_ratchet(bob.DHratchet.public_key())

@@ -9,7 +9,7 @@ def hkdf(inp, length):
 class SymmetricRatchet():
     def __init__(self, root):
         self.state = root
-    def next(self, inp):
+    def next(self, inp=b''):
         output = hkdf(self.state+inp, 80)
         self.state = output[:32]
         outkey, iv = output[32:64], output[64:]

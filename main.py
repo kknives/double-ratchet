@@ -1,4 +1,4 @@
-from .double_ratchet.actors import Bob, Alice
+from double_ratchet.actors import Bob, Alice
 
 if __name__ == "__main__":
     alice = Alice()

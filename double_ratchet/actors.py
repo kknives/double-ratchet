@@ -16,6 +16,20 @@ class Bob():
         self.SignedPKb = X25519PrivateKey.generate()
         self.OnetimePKb = X25519PrivateKey.generate()
 
+        self.DHratchet = X25519PrivateKey.generate()
+
+    def dh_ratchet(self, alice_public):
+        dh_recv = self.DHratchet.exchange(alice_public)
+        shared_recv = self.root_ratchet.next(dh_recv)[0]
+        self.recv_ratchet = SymmetricRatchet(shared_recv)
+        print("[Bob]: recv ratchet seed", b64(shared_recv))
+
+        self.DHratchet = X25519PrivateKey.generate()
+        dh_send = self.DHratchet.exchange(alice_public)
+        shared_send = self.root_ratchet.next(dh_send)[0]
+        self.send_ratchet = SymmetricRatchet(shared_send)
+        print("[Bob]: send ratchet seed", b64(shared_send))
+
     def x3dh(self, alice):
         dh1 = self.SignedPKb.exchange(alice.IdentityKa.public_key())
         dh2 = self.IdentityKb.exchange(alice.EKa.public_key())
@@ -34,6 +48,21 @@ class Alice():
     def __init__(self):
         self.IdentityKa = X25519PrivateKey.generate()
         self.EKa = X25519PrivateKey.generate()
+
+        self.DHratchet = None
+
+    def dh_ratchet(self, bob_public):
+        if self.DHratchet is not None:
+            dh_recv = self.DHratchet.exchange(bob_public)
+            shared_recv = self.root_ratchet.next(dh_recv)[0]
+            self.recv_ratchet = SymmetricRatchet(shared_recv)
+            print("[Alice]: recv ratchet seed", b64(shared_recv))
+
+        self.DHratchet = X25519PrivateKey.generate()
+        dh_send = self.DHratchet.exchange(bob_public)
+        shared_send = self.root_ratchet.next(dh_send)[0]
+        self.send_ratchet = SymmetricRatchet(shared_send)
+        print("[Alice]: send ratchet seed", b64(shared_send))
 
     def x3dh(self, bob: Bob):
         dh1 = self.IdentityKa.exchange(bob.SignedPKb.public_key())

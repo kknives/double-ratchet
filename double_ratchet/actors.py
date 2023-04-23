@@ -4,11 +4,18 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey, Ed25519PrivateKey
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend
+# from Crypto.Util.Padding import pad, unpad
 from Crypto.Cipher import AES
 
 from .symmetric_ratchet import hkdf, SymmetricRatchet
 
 b64 = lambda msg: base64.encodebytes(msg).decode('utf-8').strip()
+
+def pad(msg):
+    num = 16 - (len(msg) % 16)
+    return msg + bytes([num] * num)
+
+unpad = lambda s : s[:-ord(s[len(s)-1:])]
 
 class Bob():
     def __init__(self):
@@ -44,6 +51,18 @@ class Bob():
         self.recv_ratchet = SymmetricRatchet(self.root_ratchet.next()[0])
         self.send_ratchet = SymmetricRatchet(self.root_ratchet.next()[0])
 
+    def send(self, alice, msg):
+        key, iv = self.send_ratchet.next()
+        cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
+        print("[Bob]: Sending ciphertext to Alice", b64(cipher))
+        alice.recv(cipher, self.DHratchet.public_key())
+
+    def recv(self, cipher, alice_pk):
+        self.dh_ratchet(alice_pk)
+        key, iv = self.recv_ratchet.next()
+        msg = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(cipher))
+        print("[Bob]: Decrypted message", msg)
+
 class Alice():
     def __init__(self):
         self.IdentityKa = X25519PrivateKey.generate()
@@ -77,4 +96,16 @@ class Alice():
         self.root_ratchet = SymmetricRatchet(self.sk)
         self.recv_ratchet = SymmetricRatchet(self.root_ratchet.next()[0])
         self.send_ratchet = SymmetricRatchet(self.root_ratchet.next()[0])
+
+    def send(self, bob, msg):
+        key, iv = self.send_ratchet.next()
+        cipher = AES.new(key, AES.MODE_CBC, iv).encrypt(pad(msg))
+        print("[Alice]: Sending ciphertext to Bob", b64(cipher))
+        bob.recv(cipher, self.DHratchet.public_key())
+
+    def recv(self, cipher, bob_pk):
+        self.dh_ratchet(bob_pk)
+        key, iv = self.recv_ratchet.next()
+        msg = unpad(AES.new(key, AES.MODE_CBC, iv).decrypt(cipher))
+        print("[Alice]: Decrypted message", msg)
 

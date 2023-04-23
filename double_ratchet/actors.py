@@ -6,9 +6,9 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend
 from Crypto.Cipher import AES
 
-from .double_ratchet.symmetric_ratchet import hkdf, SymmetricRatchet
+from .symmetric_ratchet import hkdf, SymmetricRatchet
 
-lambda b64(msg): return base64.encodebytes(msg).decode('utf-8').strip()
+b64 = lambda msg: base64.encodebytes(msg).decode('utf-8').strip()
 
 class Bob():
     def __init__(self):
@@ -16,7 +16,7 @@ class Bob():
         self.SignedPKb = X25519PrivateKey.generate()
         self.OnetimePKb = X25519PrivateKey.generate()
 
-    def x3dh(self, alice: Alice):
+    def x3dh(self, alice):
         dh1 = self.SignedPKb.exchange(alice.IdentityKa.public_key())
         dh2 = self.IdentityKb.exchange(alice.EKa.public_key())
         dh3 = self.SignedPKb.exchange(alice.EKa.public_key())
